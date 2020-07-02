@@ -18,6 +18,7 @@ type Excavation = {|x: number, y: number, w: number, h: number|};
 // detection and not resort to byte-mode if possible, but we're trading off
 // a smaller library for a smaller amount of data we can potentially encode.
 // Based on http://jonisalonen.com/2012/from-utf-16-to-utf-8-in-javascript/
+
 function convertStr(str: string): string {
   let out = '';
   for (let i = 0; i < str.length; i++) {
