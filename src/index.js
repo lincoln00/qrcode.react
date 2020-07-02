@@ -52,6 +52,7 @@ type QRProps = {
   level: $Keys<typeof ErrorCorrectLevel>,
   bgColor: string,
   fgColor: string,
+  invalid: boolean,
   style?: ?Object,
   includeMargin: boolean,
   imageSettings?: {
@@ -69,6 +70,7 @@ const DEFAULT_PROPS = {
   level: 'L',
   bgColor: '#FFFFFF',
   fgColor: '#000000',
+  invalid: false,
   includeMargin: false,
 };
 
@@ -80,6 +82,7 @@ const PROP_TYPES =
         level: PropTypes.oneOf(['L', 'M', 'Q', 'H']),
         bgColor: PropTypes.string,
         fgColor: PropTypes.string,
+        invalid: PropTypes.bool,
         includeMargin: PropTypes.bool,
         imageSettings: PropTypes.shape({
           src: PropTypes.string.isRequired,
@@ -100,7 +103,7 @@ const MARGIN_SIZE = 4;
 // get an explicit height or width, I'd rather default to something than throw.
 const DEFAULT_IMG_SCALE = 0.1;
 
-function generatePath(modules: Modules, margin: number = 0): string {
+function generatePath(modules: Modules, margin: number = 0, invalid = false): string {
   const ops = [];
   modules.forEach(function(row, y) {
     let start = null;
@@ -124,7 +127,11 @@ function generatePath(modules: Modules, margin: number = 0): string {
         }
         if (start === null) {
           // Just a single dark module.
-          ops.push(`M${x + margin},${y + margin} h1v1H${x + margin}z`);
+          if(!invalid)
+          {
+            ops.push(`M${x + margin},${y + margin} h1v1H${x + margin}z`);
+          }
+          
         } else {
           // Otherwise finish the current line.
           ops.push(
@@ -237,6 +244,7 @@ class QRCodeCanvas extends React.PureComponent<QRProps, {imgLoaded: boolean}> {
       level,
       bgColor,
       fgColor,
+      invalid,
       includeMargin,
       imageSettings,
     } = this.props;
@@ -285,7 +293,7 @@ class QRCodeCanvas extends React.PureComponent<QRProps, {imgLoaded: boolean}> {
       ctx.fillStyle = fgColor;
       if (SUPPORTS_PATH2D) {
         // $FlowFixMe: Path2D c'tor doesn't support args yet.
-        ctx.fill(new Path2D(generatePath(cells, margin)));
+        ctx.fill(new Path2D(generatePath(cells, margin. invalid)));
       } else {
         cells.forEach(function(row, rdx) {
           row.forEach(function(cell, cdx) {
@@ -322,6 +330,7 @@ class QRCodeCanvas extends React.PureComponent<QRProps, {imgLoaded: boolean}> {
       level,
       bgColor,
       fgColor,
+      invalid,
       style,
       includeMargin,
       imageSettings,
@@ -373,6 +382,7 @@ class QRCodeSVG extends React.PureComponent<QRProps> {
       level,
       bgColor,
       fgColor,
+      invalid,
       includeMargin,
       imageSettings,
       ...otherProps
@@ -416,7 +426,7 @@ class QRCodeSVG extends React.PureComponent<QRProps> {
     // way faster than DOM ops.
     // For level 1, 441 nodes -> 2
     // For level 40, 31329 -> 2
-    const fgPath = generatePath(cells, margin);
+    const fgPath = generatePath(cells, margin, invalid);
 
     return (
       <svg
